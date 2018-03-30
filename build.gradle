@@ -51,7 +51,7 @@ tasks.withType(com.github.spotbugs.SpotBugsTask) {
     }
 }
 
-group = 'cn.djacke'
+group = 'cn.sem'
 version = '0.1'
 sourceCompatibility = 1.8
 
