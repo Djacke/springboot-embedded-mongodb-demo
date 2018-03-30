@@ -1,0 +1,56 @@
+spring:
+  application.name: sem
+  profiles.active: development
+  cloud.config.failFast: true
+
+---
+spring:
+  profiles: development
+  cloud:
+    config:
+      enabled: false
+      uri: http://localhost:8888
+
+management:
+  context-path: /actuator
+  security.enabled: false
+  health:
+    diskspace.enabled: false
+  endpoint:
+    health.enabled: true
+  endpoints:
+    web:
+      path-mapping.health: status
+      base-path: /manage #since spring boot 2.0.0 M6
+      expose: info,status,health
+      
+eureka:
+  client:
+    enabled: false
+spring.data.mongodb:
+  uri: mongodb://localhost/sem
+    
+---
+spring:
+  profiles: integTest
+  cloud.config.enabled: false
+  data.mongodb.port: 0
+  #mongodb.embedded.version: 3.4.10
+  
+  
+eureka:
+  client:
+    enabled: false
+
+---
+spring:
+  profiles: svt
+  cloud:
+    config:
+      uri: http://pilipa-configserver:8888
+---
+spring:
+  profiles: production
+  cloud:
+    config:
+      uri: http://pilipa-configserver:8888

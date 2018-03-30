@@ -1,0 +1,165 @@
+buildscript {
+	ext {
+		springBootVersion = '2.0.0.RELEASE'
+	}
+	repositories {
+		mavenLocal()
+		maven {
+			name "aliyun1"
+			url 'http://maven.aliyun.com/nexus/content/groups/public'
+		}
+		maven {
+            name "aliyun2"
+            url 'http://maven.aliyun.com/mvn/repository/'
+        }
+        maven {
+            name "spring repo"
+            url "http://repo.spring.io/release"
+        }
+        maven {
+            name "spring milestone"
+            url "https://repo.spring.io/milestone/"
+        }
+        maven {
+		    name "spring snapshot"
+		    url "https://repo.spring.io/snapshot"
+		}
+        jcenter()
+        mavenCentral()
+        maven {
+            url 'http://repos.zeroturnaround.com/nexus/content/groups/zt-public/'
+        }
+	}
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+	}
+}
+
+plugins {
+    id "com.github.spotbugs" version "1.6.1"
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+tasks.withType(com.github.spotbugs.SpotBugsTask) {
+    reports {
+        xml.enabled false
+        html.enabled true
+    }
+}
+
+group = 'cn.djacke'
+version = '0.1'
+sourceCompatibility = 1.8
+
+bootJar {
+    baseName = 'springboot-embedded-mongodb'
+
+    manifest {
+        attributes 'Implementation-Title': baseName,
+                'Implementation-Version': version,
+                'Built-By': System.getProperty('user.name'),
+                'Built-Date': new Date(),
+                'Built-JDK': System.getProperty('java.version')
+    }
+}
+
+repositories {
+    mavenLocal()
+    maven {
+        name "aliyun1"
+        url 'http://maven.aliyun.com/nexus/content/groups/public'
+    }
+    maven {
+        name "aliyun2"
+        url 'http://maven.aliyun.com/mvn/repository/'
+    }
+    maven {
+        name "pilipa's repo"
+        url "https://pilipa-assets.oss-cn-beijing.aliyuncs.com/repository/"
+    }
+    maven {
+        name "spring repo"
+        url "http://repo.spring.io/release"
+    }
+    maven {
+        name "spring milestone"
+        url "https://repo.spring.io/milestone/"
+    }
+    maven {
+	name "spring snapshot"
+	url "https://repo.spring.io/snapshot" 
+    }
+    
+    jcenter()
+    mavenCentral()
+    maven {
+        url 'http://repos.zeroturnaround.com/nexus/content/groups/zt-public/'
+    }
+}
+
+ext {
+	springCloudVersion = 'Finchley.M9'
+}
+
+dependencies {
+	compile('org.springframework.boot:spring-boot-starter-actuator')
+	compile('org.springframework.boot:spring-boot-starter-webflux')
+	compile('org.springframework.cloud:spring-cloud-starter-config')
+	compile('org.springframework.cloud:spring-cloud-starter-netflix-eureka-client')
+	compile('org.springframework.cloud:spring-cloud-starter-sleuth')
+	compile('org.springframework.boot:spring-boot-starter-data-mongodb-reactive')
+	
+	
+	compileOnly('org.projectlombok:lombok')
+	
+	testCompile('org.springframework.boot:spring-boot-starter-test')
+	testCompile('io.projectreactor:reactor-test')
+	testCompile("de.flapdoodle.embed:de.flapdoodle.embed.mongo")
+}
+
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+	}
+}
+
+sourceSets {
+	integTest {
+		java.srcDir file('src/integTest/java')
+		resources.srcDir file('src/integTest/resources')
+	}
+}
+
+task integTest(type: Test) {
+	testClassesDir = sourceSets.integTest.output.classesDir
+	classpath = sourceSets.integTest.runtimeClasspath
+}
+
+check.dependsOn integTest
+
+integTest {
+    // set heap size for the test JVM(s)
+    maxHeapSize = "1024m"
+    maxParallelForks = 1
+    ignoreFailures Boolean.valueOf(System.getProperty("test.igonreFailures", "true"))
+
+    // uncomment below line for debug propose if necessary
+    //jvmArgs '-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=6006'
+    testLogging {
+        // Show that tests are run in the command-line output
+        events "started", "passed", "skipped", "failed"
+        afterSuite { desc, result ->
+            if (!desc.parent) { // will match the outermost suite
+                def output = "IntegTest Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+                def startItem = '|  ', endItem = '  |'
+                def repeatLength = startItem.length() + output.length() + endItem.length()
+                println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
+            }
+        }
+    }
+}
+
