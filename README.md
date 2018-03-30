@@ -41,6 +41,7 @@ public Mono<Person> updateEmailAndAddrByUsername(String username, Person person)
 - PersonRepository.java
 
 ```java
+public class PersonRepositoryImpl implements PersonRepositoryCustom {
     @Autowired
     private ReactiveMongoTemplate mongoTemplate;
     
@@ -50,4 +51,32 @@ public Mono<Person> updateEmailAndAddrByUsername(String username, Person person)
                 new Update().set("email", person.getEmail()).set("addr", person.getAddr()),
                 FindAndModifyOptions.options().returnNew(true), Person.class);
     }
+}
 ```
+
+- PersonRepositoryTest.java
+
+```java
+	@Autowired
+    private PersonRepository personRepositoty;
+    
+    @Before
+    public void setUp() {
+        personRepositoty.save(Person.builder().username("张三").addr("朝阳区小营路").age(32).build())
+                .block(Duration.ofSeconds(1));
+    }
+    
+    @Test
+    public void testUpdateAndFind() {
+       Person person = personRepositoty.findByUsername("张三").block();
+       Assertions.assertThat(person).isNotNull();
+       Assertions.assertThat(person.getAddr()).isEqualTo("朝阳区小营路");
+        personRepositoty
+                .updateEmailAndAddrByUsername("张三",
+                        Person.builder().addr("海淀花园路").email("xxx@qq.com").build())
+                .block(Duration.ofSeconds(1));
+        Person person2 = personRepositoty.findByUsername("张三").block();
+        Assertions.assertThat(person2).isNotNull();
+        Assertions.assertThat(person2.getAddr()).isEqualTo("海淀花园路");
+    }
+```    
